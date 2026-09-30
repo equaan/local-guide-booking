@@ -4,7 +4,7 @@ Honesty rule: I use AI to go faster, not to skip understanding. Before merging o
 
 | Date | Task or work item | Tool | What I asked for | What it produced | What I reviewed, ran or changed | Evidence (PR or commit link) |
 |---|---|---|---|---|---|---|
-| | | | | | | |
+| 2026-09-30 | B-00 app skeleton | Codex | Implement the B-00 prompt after pre-flight setup | Factory, config, ops routes, templates and smoke tests | Pending student review and command verification | Pending PR |
 
 ## Viva self-check (tick before each task is marked Done)
 
