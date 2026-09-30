@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.egg-info/
+
+# App runtime
+.env
+instance/
+*.db
+*.sqlite3
+
+# Test artifacts (Selenium failure screenshots, reports)
+test-artifacts/
+reports/
+
+# Docs build output
+build/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Infrastructure secrets (later tasks)
+*.tfstate
+*.tfstate.*
+.terraform/
+*.pem
+*.key
+kubeconfig*

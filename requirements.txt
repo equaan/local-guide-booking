@@ -1,0 +1,18 @@
+# Runtime dependencies for the Local Guide Booking System.
+# Lower bounds are versions known to exist; upper bounds block surprise major upgrades.
+# After the FIRST successful install, freeze exact versions and commit the result:
+#     pip freeze > requirements.lock
+# The Dockerfile (Task 11) should install from requirements.lock for reproducible images.
+Flask>=3.0,<4.0
+Flask-SQLAlchemy>=3.1,<4.0
+SQLAlchemy>=2.0,<3.0
+Flask-Migrate>=4.0,<5.0
+Flask-Login>=0.6.3,<0.7
+Flask-WTF>=1.2,<2.0
+WTForms>=3.1,<4.0
+email-validator>=2.1,<3.0
+python-dotenv>=1.0,<2.0
+prometheus-client>=0.20,<1.0
+gunicorn>=22.0,<24.0
+psycopg2-binary>=2.9,<3.0
+tzdata>=2024.1
