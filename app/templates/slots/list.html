@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Browse slots{% endblock %}
+
+{% block content %}
+  <h1>Available guide slots</h1>
+  <form method="get">
+    <p><label for="filter-city">City</label> <input id="filter-city" name="city" value="{{ city }}"></p>
+    <p><label for="filter-date">Date</label> <input id="filter-date" name="date" type="date" value="{{ slot_date }}"></p>
+    <button id="apply-filter" type="submit">Apply filters</button>
+  </form>
+  {% if slots %}
+    {% for slot in slots %}
+      <article data-testid="slot-row" data-slot-id="{{ slot.id }}">
+        <h2>{{ slot.title }}</h2>
+        <p>{{ slot.guide.name }} - {{ slot.guide.city }}</p>
+        <p>{{ slot.start_at }} to {{ slot.end_at }} | INR {{ slot.price_inr }}</p>
+        <a data-testid="slot-link" href="{{ url_for('slots.slot_detail', slot_id=slot.id) }}">View slot</a>
+      </article>
+    {% endfor %}
+  {% else %}
+    <p data-testid="empty-state">No available slots match your filters.</p>
+  {% endif %}
+{% endblock %}
