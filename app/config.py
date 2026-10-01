@@ -19,7 +19,7 @@ class BaseConfig:
             GIT_SHA=os.getenv("GIT_SHA", "local"),
             LOG_LEVEL=os.getenv("LOG_LEVEL", "INFO"),
             PORT=int(os.getenv("PORT", "8000")),
-            SECRET_KEY=os.getenv("SECRET_KEY"),
+            SECRET_KEY=os.getenv("SECRET_KEY") or os.urandom(32),
             SESSION_COOKIE_HTTPONLY=True,
             SESSION_COOKIE_SAMESITE="Lax",
             SQLALCHEMY_DATABASE_URI=os.getenv("DATABASE_URL", "sqlite:///app.db"),
