@@ -41,6 +41,7 @@ class TestConfig(BaseConfig):
             DATABASE_URL="sqlite://",
             SQLALCHEMY_DATABASE_URI="sqlite://",
             TESTING=True,
+            SECRET_KEY=os.urandom(32),
             WTF_CSRF_ENABLED=False,
         )
 

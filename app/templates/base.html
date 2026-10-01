@@ -10,8 +10,20 @@
       <nav aria-label="Main navigation">
         <a href="/" aria-label="Local Guide Booking home">Local Guide Booking</a>
         <a href="/slots" data-testid="nav-slots">Browse slots</a>
-        <a href="/login" data-testid="nav-login">Log in</a>
-        <a href="/register" data-testid="nav-register">Register</a>
+        {% if current_user.is_authenticated %}
+          <span data-testid="nav-user">{{ current_user.name }}</span>
+          <a href="/bookings" data-testid="nav-bookings">My bookings</a>
+          {% if current_user.role.value == "guide" %}
+            <a href="/guide/slots" data-testid="nav-guide-slots">My slots</a>
+          {% endif %}
+          <form method="post" action="{{ url_for('auth.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" data-testid="nav-logout">Log out</button>
+          </form>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}" data-testid="nav-login">Log in</a>
+          <a href="{{ url_for('auth.register') }}" data-testid="nav-register">Register</a>
+        {% endif %}
       </nav>
     </header>
     <main>
