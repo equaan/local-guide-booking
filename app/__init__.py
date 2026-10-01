@@ -13,7 +13,10 @@ from app.extensions import csrf, db, login_manager, migrate
 
 def create_app(config_class: type[BaseConfig] | None = None) -> Flask:
     """Create a configured app so tests and production get isolated state."""
+    from app import models
+
     app = Flask(__name__)
+    _ = models
     selected_config = config_class or _config_for_environment()
     selected_config.apply(app)
 
