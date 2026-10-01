@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}My slots{% endblock %}
+
+{% block content %}
+  <h1>My availability slots</h1>
+  <p><a href="{{ url_for('guide.new_slot') }}">Create a slot</a></p>
+  {% if slots %}
+    {% for slot, status in slots %}
+      <article data-testid="guide-slot-row" data-slot-id="{{ slot.id }}">
+        <h2>{{ slot.title }}</h2>
+        <p>{{ slot.start_at }} to {{ slot.end_at }}</p>
+        <p data-testid="slot-status">{{ status }}</p>
+        {% if status == "available" %}
+          <form method="post" action="{{ url_for('guide.deactivate', slot_id=slot.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit">Deactivate</button>
+          </form>
+        {% endif %}
+      </article>
+    {% endfor %}
+  {% else %}
+    <p data-testid="empty-state">No slots yet.</p>
+  {% endif %}
+{% endblock %}
