@@ -6,6 +6,7 @@ Honesty rule: I use AI to go faster, not to skip understanding. Before merging o
 |---|---|---|---|---|---|---|
 | 2026-09-30 | B-00 app skeleton | Codex | Implement the B-00 prompt after pre-flight setup | Factory, config, ops routes, templates and smoke tests | Pending student review and command verification | Pending PR |
 | 2026-09-30 | B-01 models, migrations, seed | Codex | Implement the B-01 prompt after B-00 merged | Models, migration, idempotent seed script and constraint tests | Pending student review and command verification | Pending PR |
+| 2026-10-01 | B-02 authentication | GitHub Copilot | Implement the B-02 prompt after B-01 merged | Registration, login, logout, navigation state and auth tests | Tests, Ruff and Bandit run; pending student review | Pending PR |
 
 ## Viva self-check (tick before each task is marked Done)
 
