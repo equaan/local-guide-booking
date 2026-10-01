@@ -1,8 +1,15 @@
 from __future__ import annotations
 
 from flask_wtf import FlaskForm
-from wtforms import PasswordField, SelectField, StringField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, Email, Length, Optional
+from wtforms import (
+    IntegerField,
+    PasswordField,
+    SelectField,
+    StringField,
+    SubmitField,
+    TextAreaField,
+)
+from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional
 
 
 class RegistrationForm(FlaskForm):
@@ -32,3 +39,13 @@ class LoginForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired(), Email(), Length(max=254)])
     password = PasswordField("Password", validators=[DataRequired()])
     submit = SubmitField("Log in")
+
+
+class SlotForm(FlaskForm):
+    title = StringField("Title", validators=[DataRequired(), Length(max=120)])
+    start_at = StringField("Start time", validators=[DataRequired()])
+    end_at = StringField("End time", validators=[DataRequired()])
+    price_inr = IntegerField(
+        "Price (INR)", validators=[DataRequired(), NumberRange(min=0)]
+    )
+    submit = SubmitField("Create slot")
