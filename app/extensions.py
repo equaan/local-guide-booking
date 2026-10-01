@@ -14,5 +14,13 @@ csrf = CSRFProtect()
 
 @login_manager.request_loader
 def load_anonymous_user(_request: Request) -> None:
-    """Keep public pages renderable until B-02 provides model-backed loading."""
+    """Keep request authentication session-backed through Flask-Login."""
     return None
+
+
+@login_manager.user_loader
+def load_user(user_id: str):
+    """Load the session user without exposing database details to routes."""
+    from app.models import User
+
+    return db.session.get(User, int(user_id))
