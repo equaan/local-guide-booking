@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}{{ slot.title }}{% endblock %}
+
+{% block content %}
+  <h1>{{ slot.title }}</h1>
+  <p>Guide: {{ slot.guide.name }}</p>
+  <p>City: {{ slot.guide.city }}</p>
+  <p>{{ slot.guide.bio or "No bio provided." }}</p>
+  <p>{{ slot.start_at }} to {{ slot.end_at }}</p>
+  <p>Price: INR {{ slot.price_inr }}</p>
+  <p>{{ "Available" if available else "Unavailable" }}</p>
+{% endblock %}

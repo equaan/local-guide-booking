@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, func, select
 
 from app import timeutils
 from app.extensions import db
-from app.models import BookingEvent, BookingStatus, Slot
+from app.models import Booking, BookingEvent, BookingStatus, Slot, User
 
 
 class SlotValidationError(ValueError):
@@ -106,3 +106,32 @@ def deactivate_slot(slot: Slot) -> None:
                 )
             )
     db.session.commit()
+
+
+def list_public_slots(
+    *, city: str | None = None, slot_date: str | None = None
+) -> list[Slot]:
+    """Return only active, future and unconfirmed slots matching public filters."""
+    current_time = timeutils.now_ist()
+    statement = (
+        select(Slot)
+        .join(User, Slot.guide_id == User.id)
+        .where(
+            Slot.is_active.is_(True),
+            Slot.start_at > current_time,
+            ~Slot.bookings.any(Booking.status == BookingStatus.CONFIRMED),
+        )
+        .order_by(Slot.start_at.asc())
+    )
+    if city:
+        statement = statement.where(func.lower(User.city) == city.strip().lower())
+    if slot_date:
+        statement = statement.where(func.date(Slot.start_at) == slot_date)
+    return list(db.session.scalars(statement).all())
+
+
+def get_public_slot(slot_id: int) -> Slot | None:
+    """Load a slot for its public detail page without hiding unavailable status."""
+    return db.session.scalar(
+        select(Slot).where(Slot.id == slot_id).join(User, Slot.guide_id == User.id)
+    )
