@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Page not found | Local Guide Booking{% endblock %}
+
+{% block content %}
+  <section class="error-page">
+    <p class="eyebrow">404</p>
+    <h1>That page is not here.</h1>
+    <p>The guide, slot, or booking you requested may no longer be available.</p>
+    <a class="button" href="{{ url_for('slots.list_slots') }}">Browse guides</a>
+  </section>
+{% endblock %}

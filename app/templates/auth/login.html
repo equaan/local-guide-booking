@@ -3,11 +3,14 @@
 {% block title %}Log in{% endblock %}
 
 {% block content %}
+  <section class="auth-card">
   <h1>Log in</h1>
-  <form method="post">
+  <p class="intro">Pick up where your next local experience left off.</p>
+  <form class="stacked-form" method="post">
     {{ form.hidden_tag() }}
-    <p>{{ form.email.label }} {{ form.email(id="email") }} {% for error in form.email.errors %}<span>{{ error }}</span>{% endfor %}</p>
-    <p>{{ form.password.label }} {{ form.password(id="password") }} {% for error in form.password.errors %}<span>{{ error }}</span>{% endfor %}</p>
+    <div class="field">{{ form.email.label }} {{ form.email(id="email") }} {% for error in form.email.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+    <div class="field">{{ form.password.label }} {{ form.password(id="password") }} {% for error in form.password.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
     {{ form.submit(id="submit-login") }}
   </form>
+  </section>
 {% endblock %}

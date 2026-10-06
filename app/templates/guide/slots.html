@@ -3,23 +3,31 @@
 {% block title %}My slots{% endblock %}
 
 {% block content %}
-  <h1>My availability slots</h1>
-  <p><a href="{{ url_for('guide.new_slot') }}">Create a slot</a></p>
+  <section class="guide-console">
+  <div class="page-heading">
+    <h1>My availability slots</h1>
+    <a class="button" href="{{ url_for('guide.new_slot') }}">Create a slot</a>
+  </div>
   {% if slots %}
+    <div class="guide-slot-list">
     {% for slot, status in slots %}
       <article data-testid="guide-slot-row" data-slot-id="{{ slot.id }}">
-        <h2>{{ slot.title }}</h2>
-        <p>{{ slot.start_at }} to {{ slot.end_at }}</p>
-        <p data-testid="slot-status">{{ status }}</p>
+        <div>
+          <h2>{{ slot.title }}</h2>
+          <p>{{ slot.start_at }} to {{ slot.end_at }}</p>
+        </div>
+        <p class="slot-status status-{{ status }}" data-testid="slot-status">{{ status }}</p>
         {% if status == "available" %}
           <form method="post" action="{{ url_for('guide.deactivate', slot_id=slot.id) }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit">Deactivate</button>
+            <button class="button-secondary" type="submit">Deactivate</button>
           </form>
         {% endif %}
       </article>
     {% endfor %}
+    </div>
   {% else %}
-    <p data-testid="empty-state">No slots yet.</p>
+    <p class="empty-state" data-testid="empty-state">You have no slots yet. Add a time travelers can request.</p>
   {% endif %}
+  </section>
 {% endblock %}

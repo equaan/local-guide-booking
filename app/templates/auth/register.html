@@ -3,15 +3,18 @@
 {% block title %}Register{% endblock %}
 
 {% block content %}
+  <section class="auth-card">
   <h1>Create an account</h1>
-  <form method="post">
+  <p class="intro">Set up your profile to request a local experience or offer one.</p>
+  <form class="stacked-form" method="post">
     {{ form.hidden_tag() }}
-    <p>{{ form.name.label }} {{ form.name(id="name") }} {% for error in form.name.errors %}<span>{{ error }}</span>{% endfor %}</p>
-    <p>{{ form.email.label }} {{ form.email(id="email") }} {% for error in form.email.errors %}<span>{{ error }}</span>{% endfor %}</p>
-    <p>{{ form.password.label }} {{ form.password(id="password") }} {% for error in form.password.errors %}<span>{{ error }}</span>{% endfor %}</p>
-    <p>{{ form.role.label }} {{ form.role(id="role") }} {% for error in form.role.errors %}<span>{{ error }}</span>{% endfor %}</p>
-    <p>{{ form.city.label }} {{ form.city(id="city") }} {% for error in form.city.errors %}<span>{{ error }}</span>{% endfor %}</p>
-    <p>{{ form.bio.label }} {{ form.bio(id="bio") }} {% for error in form.bio.errors %}<span>{{ error }}</span>{% endfor %}</p>
+    <div class="field">{{ form.name.label }} {{ form.name(id="name") }} {% for error in form.name.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+    <div class="field">{{ form.email.label }} {{ form.email(id="email") }} {% for error in form.email.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+    <div class="field">{{ form.password.label }} {{ form.password(id="password") }} {% for error in form.password.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+    <div class="field role-field">{{ form.role.label }} {{ form.role(id="role") }} {% for error in form.role.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+    <div class="field">{{ form.city.label }} {{ form.city(id="city") }} {% for error in form.city.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+    <div class="field">{{ form.bio.label }} {{ form.bio(id="bio") }} {% for error in form.bio.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
     {{ form.submit(id="submit-register") }}
   </form>
+  </section>
 {% endblock %}

@@ -3,21 +3,22 @@
 {% block title %}Booking details | Local Guide Booking{% endblock %}
 
 {% block content %}
+  <section class="booking-detail">
+  <a class="back-link" href="{{ url_for('bookings.bookings_list') }}">Back to bookings</a>
   <h1>Booking details</h1>
-  <p><strong>{{ booking.slot.title }}</strong></p>
-  <p>Status: <span data-testid="booking-status">{{ booking.status.value }}</span></p>
-  <p>Traveler: {{ booking.traveler.name }}</p>
-  <p>Guide: {{ booking.slot.guide.name }}</p>
+  <p class="booking-status booking-status-large status-{{ booking.status.value|lower }}" data-testid="booking-status">{{ booking.status.value }}</p>
+  <p class="booking-title">{{ booking.slot.title }}</p>
+  <p class="booking-people">Traveler: {{ booking.traveler.name }} <span>Guide: {{ booking.slot.guide.name }}</span></p>
 
   {% if can_confirm %}
-    <form method="post" action="{{ url_for('bookings.confirm_booking_action', booking_id=booking.id) }}">
+    <form class="inline-action" method="post" action="{{ url_for('bookings.confirm_booking_action', booking_id=booking.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button id="confirm-btn" type="submit">Confirm booking</button>
     </form>
   {% endif %}
 
   {% if can_cancel %}
-    <form method="post" action="{{ url_for('bookings.cancel_booking_action', booking_id=booking.id) }}">
+    <form class="cancel-form" method="post" action="{{ url_for('bookings.cancel_booking_action', booking_id=booking.id) }}">
       {{ cancel_form.hidden_tag() }}
       <label for="reason">Reason</label>
       {{ cancel_form.reason(id="reason") }}
@@ -26,7 +27,7 @@
   {% endif %}
 
   <h2>Status timeline</h2>
-  <ol>
+  <ol class="timeline">
     {% for event in events %}
       <li data-testid="timeline-item">
         {{ event.from_status.value if event.from_status else "None" }} to {{ event.to_status.value }}
@@ -36,4 +37,5 @@
       </li>
     {% endfor %}
   </ol>
+  </section>
 {% endblock %}
