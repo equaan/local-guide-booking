@@ -9,6 +9,7 @@ Honesty rule: I use AI to go faster, not to skip understanding. Before merging o
 | 2026-10-01 | B-02 authentication | GitHub Copilot | Implement the B-02 prompt after B-01 merged | Registration, login, logout, navigation state and auth tests | Tests, Ruff and Bandit run; pending student review | Pending PR |
 | 2026-10-01 | B-03 guide slots | GitHub Copilot | Implement the B-03 prompt after B-02 merged | Slot service rules, guide routes, forms, templates and tests | Tests, Ruff and Bandit run; pending student review | Pending PR |
 | 2026-10-06 | B-05 booking service | Codex | Repair and complete the existing B-05 state-machine branch | Atomic request, confirm, cancel service; action routes; forms; unit and integration tests | Ran pytest (39 passed), Ruff, coverage (90%), and Bandit; pending student review | Pending PR |
+| 2026-10-07 | B-06 booking pages | Codex | Rebuild B-06 from the merged B-05 baseline | Role-scoped booking list and detail pages with a status timeline and action controls | Ran pytest (44 passed), Ruff, coverage (91%), and Bandit; pending student review | Pending PR |
 
 ## Viva self-check (tick before each task is marked Done)
 

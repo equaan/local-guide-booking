@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Booking details | Local Guide Booking{% endblock %}
+
+{% block content %}
+  <h1>Booking details</h1>
+  <p><strong>{{ booking.slot.title }}</strong></p>
+  <p>Status: <span data-testid="booking-status">{{ booking.status.value }}</span></p>
+  <p>Traveler: {{ booking.traveler.name }}</p>
+  <p>Guide: {{ booking.slot.guide.name }}</p>
+
+  {% if can_confirm %}
+    <form method="post" action="{{ url_for('bookings.confirm_booking_action', booking_id=booking.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button id="confirm-btn" type="submit">Confirm booking</button>
+    </form>
+  {% endif %}
+
+  {% if can_cancel %}
+    <form method="post" action="{{ url_for('bookings.cancel_booking_action', booking_id=booking.id) }}">
+      {{ cancel_form.hidden_tag() }}
+      <label for="reason">Reason</label>
+      {{ cancel_form.reason(id="reason") }}
+      <button id="cancel-btn" type="submit">Cancel booking</button>
+    </form>
+  {% endif %}
+
+  <h2>Status timeline</h2>
+  <ol>
+    {% for event in events %}
+      <li data-testid="timeline-item">
+        {{ event.from_status.value if event.from_status else "None" }} to {{ event.to_status.value }}
+        by {{ event.actor.name if event.actor else "System" }}
+        at {{ event.created_at }}
+        {% if event.reason %}: {{ event.reason }}{% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+{% endblock %}
