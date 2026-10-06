@@ -7,6 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.extensions import db
 from app.forms import LoginForm, RegistrationForm
+from app.metrics import users_registered
 from app.models import User, UserRole
 
 auth_bp = Blueprint("auth", __name__)
@@ -36,6 +37,7 @@ def register():
             )
             db.session.add(user)
             db.session.commit()
+            users_registered.labels(role=user.role.value).inc()
             login_user(user)
             flash("Registration successful.", "success")
             return redirect(url_for("home"))
