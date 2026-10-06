@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from flask import Blueprint, abort, jsonify, render_template, request
 
+from app.forms import BookingRequestForm
 from app.models import BookingStatus
 from app.services.slots import get_public_slot, list_public_slots
 from app.timeutils import now_ist
@@ -35,7 +36,12 @@ def slot_detail(slot_id: int):
     available = available and not any(
         booking.status is BookingStatus.CONFIRMED for booking in slot.bookings
     )
-    return render_template("slots/detail.html", slot=slot, available=available)
+    return render_template(
+        "slots/detail.html",
+        slot=slot,
+        available=available,
+        booking_form=BookingRequestForm(),
+    )
 
 
 @slots_bp.get("/api/v1/slots")

@@ -49,3 +49,13 @@ class SlotForm(FlaskForm):
         "Price (INR)", validators=[DataRequired(), NumberRange(min=0)]
     )
     submit = SubmitField("Create slot")
+
+
+class BookingRequestForm(FlaskForm):
+    note = TextAreaField("Note", validators=[Optional(), Length(max=300)])
+    submit = SubmitField("Request booking")
+
+
+class CancelBookingForm(FlaskForm):
+    reason = StringField("Reason", validators=[Optional(), Length(max=200)])
+    submit = SubmitField("Cancel booking")
