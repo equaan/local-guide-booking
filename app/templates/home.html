@@ -3,7 +3,13 @@
 {% block title %}Find a Local Guide{% endblock %}
 
 {% block content %}
-  <h1>Find a local guide</h1>
-  <p>Browse available times and request a booking with a local guide.</p>
-  <p><a href="/slots">Browse slots</a></p>
+  <section class="hero">
+    <p class="eyebrow">Local knowledge, on your time</p>
+    <h1>Find a local guide</h1>
+    <p class="hero-copy">Browse available times and request a booking with a guide who knows the place beyond the postcard.</p>
+    <div class="hero-actions">
+      <a class="button" href="/slots">Browse guides</a>
+      <a class="text-link" href="{{ url_for('auth.register') }}">Become a guide</a>
+    </div>
+  </section>
 {% endblock %}

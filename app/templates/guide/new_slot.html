@@ -3,13 +3,16 @@
 {% block title %}Create slot{% endblock %}
 
 {% block content %}
+  <section class="form-page">
   <h1>Create an availability slot</h1>
-  <form method="post">
+  <p class="intro">Choose a clear title and a time travelers can rely on.</p>
+  <form class="stacked-form" method="post">
     {{ form.hidden_tag() }}
-    <p>{{ form.title.label }} {{ form.title(id="title") }} {% for error in form.title.errors %}<span>{{ error }}</span>{% endfor %}</p>
-    <p>{{ form.start_at.label }} {{ form.start_at(id="start_at", type="datetime-local") }} {% for error in form.start_at.errors %}<span>{{ error }}</span>{% endfor %}</p>
-    <p>{{ form.end_at.label }} {{ form.end_at(id="end_at", type="datetime-local") }} {% for error in form.end_at.errors %}<span>{{ error }}</span>{% endfor %}</p>
-    <p>{{ form.price_inr.label }} {{ form.price_inr(id="price_inr") }} {% for error in form.price_inr.errors %}<span>{{ error }}</span>{% endfor %}</p>
+    <div class="field">{{ form.title.label }} {{ form.title(id="title") }} {% for error in form.title.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+    <div class="field">{{ form.start_at.label }} {{ form.start_at(id="start_at", type="datetime-local") }} {% for error in form.start_at.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+    <div class="field">{{ form.end_at.label }} {{ form.end_at(id="end_at", type="datetime-local") }} {% for error in form.end_at.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+    <div class="field">{{ form.price_inr.label }} {{ form.price_inr(id="price_inr") }} {% for error in form.price_inr.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
     {{ form.submit(id="submit-slot") }}
   </form>
+  </section>
 {% endblock %}

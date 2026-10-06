@@ -3,22 +3,27 @@
 {% block title %}Browse slots{% endblock %}
 
 {% block content %}
-  <h1>Available guide slots</h1>
-  <form method="get">
-    <p><label for="filter-city">City</label> <input id="filter-city" name="city" value="{{ city }}"></p>
-    <p><label for="filter-date">Date</label> <input id="filter-date" name="date" type="date" value="{{ slot_date }}"></p>
+  <section class="browse-page">
+  <h1>Find a guide</h1>
+  <form class="filter-form" method="get">
+    <div class="field"><label for="filter-city">City</label><input id="filter-city" name="city" value="{{ city }}"></div>
+    <div class="field"><label for="filter-date">Date</label><input id="filter-date" name="date" type="date" value="{{ slot_date }}"></div>
     <button id="apply-filter" type="submit">Apply filters</button>
   </form>
   {% if slots %}
+    <div class="slot-list">
     {% for slot in slots %}
       <article data-testid="slot-row" data-slot-id="{{ slot.id }}">
-        <h2>{{ slot.title }}</h2>
-        <p>{{ slot.guide.name }} - {{ slot.guide.city }}</p>
-        <p>{{ slot.start_at }} to {{ slot.end_at }} | INR {{ slot.price_inr }}</p>
-        <a data-testid="slot-link" href="{{ url_for('slots.slot_detail', slot_id=slot.id) }}">View slot</a>
+        <a class="slot-link" data-testid="slot-link" href="{{ url_for('slots.slot_detail', slot_id=slot.id) }}">
+          <p class="slot-guide">{{ slot.guide.name }} <span>{{ slot.guide.city }}</span></p>
+          <h2>{{ slot.title }}</h2>
+          <p class="slot-meta">{{ slot.start_at }} to {{ slot.end_at }} <span>INR {{ slot.price_inr }}</span></p>
+        </a>
       </article>
     {% endfor %}
+    </div>
   {% else %}
-    <p data-testid="empty-state">No available slots match your filters.</p>
+    <p class="empty-state" data-testid="empty-state">No guides match these filters yet. Try a nearby city or clear the date to see more availability.</p>
   {% endif %}
+  </section>
 {% endblock %}

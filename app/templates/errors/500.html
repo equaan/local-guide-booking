@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Something needs a moment | Local Guide Booking{% endblock %}
+
+{% block content %}
+  <section class="error-page">
+    <p class="eyebrow">500</p>
+    <h1>We could not complete that request.</h1>
+    <p>Please return home and try again in a moment.</p>
+    <a class="button" href="{{ url_for('home') }}">Return home</a>
+  </section>
+{% endblock %}

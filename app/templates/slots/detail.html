@@ -3,19 +3,25 @@
 {% block title %}{{ slot.title }}{% endblock %}
 
 {% block content %}
+  <section class="slot-detail">
+  <p class="eyebrow">{{ slot.guide.city }}</p>
   <h1>{{ slot.title }}</h1>
-  <p>Guide: {{ slot.guide.name }}</p>
-  <p>City: {{ slot.guide.city }}</p>
-  <p>{{ slot.guide.bio or "No bio provided." }}</p>
-  <p>{{ slot.start_at }} to {{ slot.end_at }}</p>
-  <p>Price: INR {{ slot.price_inr }}</p>
-  <p>{{ "Available" if available else "Unavailable" }}</p>
+  <p class="guide-byline">With {{ slot.guide.name }}</p>
+  <p class="guide-bio">{{ slot.guide.bio or "Your guide has not added a bio yet." }}</p>
+  <dl class="detail-list">
+    <div><dt>When</dt><dd>{{ slot.start_at }} to {{ slot.end_at }}</dd></div>
+    <div><dt>Price</dt><dd>INR {{ slot.price_inr }}</dd></div>
+    <div><dt>Availability</dt><dd>{{ "Available" if available else "Unavailable" }}</dd></div>
+  </dl>
   {% if available and current_user.is_authenticated and current_user.role.value == "traveler" %}
-    <form method="post" action="{{ url_for('bookings.request_booking_action', slot_id=slot.id) }}">
+    <form class="booking-form" method="post" action="{{ url_for('bookings.request_booking_action', slot_id=slot.id) }}">
       {{ booking_form.hidden_tag() }}
       <label for="note">Note</label>
       {{ booking_form.note(id="note") }}
       <button id="book-btn" type="submit">Request booking</button>
     </form>
+  {% elif not available %}
+    <p class="availability-note">This time is no longer available. Browse other guide slots to find a time that works.</p>
   {% endif %}
+  </section>
 {% endblock %}

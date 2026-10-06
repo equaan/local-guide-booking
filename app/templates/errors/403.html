@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Access restricted | Local Guide Booking{% endblock %}
+
+{% block content %}
+  <section class="error-page">
+    <p class="eyebrow">403</p>
+    <h1>This area is not available to you.</h1>
+    <p>Return to the guide listings and choose an available time that suits you.</p>
+    <a class="button" href="{{ url_for('slots.list_slots') }}">Browse guides</a>
+  </section>
+{% endblock %}
