@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}My bookings | Local Guide Booking{% endblock %}
+
+{% block content %}
+  <h1>My bookings</h1>
+  {% if bookings %}
+    <ul>
+      {% for booking in bookings %}
+        <li data-testid="booking-row" data-booking-id="{{ booking.id }}">
+          <a href="{{ url_for('bookings.booking_detail', booking_id=booking.id) }}">
+            <strong>{{ booking.slot.title }}</strong>
+            <span data-testid="booking-status">{{ booking.status.value }}</span>
+          </a>
+          {% if current_user.role.value == "guide" %}
+            <span>Traveler: {{ booking.traveler.name }}</span>
+          {% else %}
+            <span>Guide: {{ booking.slot.guide.name }}</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p data-testid="empty-state">You have no bookings yet.</p>
+  {% endif %}
+{% endblock %}
