@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}My Bookings{% endblock %}
+
+{% block content %}
+<h1>My Bookings</h1>
+
+{% if bookings %}
+<ul>
+  {% for booking in bookings %}
+  <li data-testid="booking-row" data-booking-id="{{ booking.id }}">
+    <data-testid="booking-status">{{ booking.status }}</data-testid>
+    <span>{{ booking.slot.title }} with {{ booking.slot.guide.name }}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No bookings found.</p>
+{% endif %}
+{% if is_guide %}<a href="{{ url_for('guide.new_slot') }}">Create a slot</a> to start receiving bookings.{% endif %}
+{% if not is_guide %}<a href="{{ url_for('auth.login') }}">Log in</a> to see your bookings.{% endif %}
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Booking Detail{% endblock %}
+
+{% block content %}
+<h1>Booking Detail</h1>
+
+<p><strong>Status:</strong> <span data-testid="booking-status">{{ booking.status }}</span></p>
+
+{% if booking.slot %}
+  <p><strong>Slot:</strong> {{ booking.slot.title }} with {{ booking.slot.guide.name }}{% if booking.slot.guide.city %}({{ booking.slot.guide.city }}){% endif %}</p>
+  <p><strong>Time:</strong> {{ booking.slot.start_at }} to {{ booking.slot.end_at }}</p>
+  <p><strong>Price:</strong> INR {{ booking.slot.price_inr }}</p>
+{% endif %}
+
+<p><strong>Note:</strong> {{ booking.note or "No note provided." }}</p>
+
+{% if can_confirm %}
+<form method="post" action="{{ url_for('guide.confirm_booking_route', booking_id=booking.id) }}" class="clearfix">
+  <button type="submit" id="confirm-btn" data-testid="confirm-btn">Confirm</button>
+</form>
+{% endif %}
+
+{% if can_cancel %}
+<form method="post" action="{{ url_for('guide.cancel_booking_route', booking_id=booking.id) }}" class="clearfix">
+  <button type="submit" id="cancel-btn" data-testid="cancel-btn">Cancel</button>
+  {% if booking.status is not BookingStatus.PENDING %}
+    <input type="text" id="reason" name="reason" placeholder="Reason (optional)" maxlength="200">
+  {% endif %}
+</form>
+{% endif %}
+
+{% if timeline %}
+<h3>Timeline</h3>
+<dl>
+  {% for item in timeline %}
+    <dt>{{ item.action }}</dt>
+    <dd>{{ item.actor }}{% if item.timestamp %} {{ item.timestamp }}{% endif %}</dd>
+  {% endfor %}
+</dl>
+{% endif %}
+</blockquote>
+{% endblock %}
