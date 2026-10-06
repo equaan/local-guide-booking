@@ -1,13 +1,22 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Blueprint, abort, flash, redirect, render_template, url_for
 from flask_login import current_user, login_required
 
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+
 from app.extensions import db
 from app.forms import SlotForm
-from app.models import Slot, UserRole
+from app.models import BookingStatus, User, UserRole, Booking, Slot
+from app.services.bookings import (
+    BookingValidationError,
+    cancel_booking,
+    confirm_booking,
+    request_booking,
+)
 from app.services.slots import (
     SlotValidationError,
     create_slot,
@@ -70,3 +79,97 @@ def deactivate(slot_id: int):
     else:
         flash("Slot deactivated.", "success")
     return redirect(url_for("guide.slots"))
+
+
+# ----------------------------------------------------------------------------
+# BR-13: My bookings list
+# ----------------------------------------------------------------------------
+
+
+@guide_bp.get("/bookings")
+@login_required
+def bookings_list():
+    """Show bookings for the logged-in user.
+
+    - Traveler sees their own bookings, newest first.
+    - Guide sees bookings on their own slots, newest first.
+    """
+    user = current_user
+
+    if user.role is UserRole.TRAVELER:
+        bookings = (
+            select(Booking)
+            .where(Booking.traveler_id == user.id)
+            .order_by(Booking.created_at.desc())
+        )
+    else:  # GUIDE
+        bookings = (
+            select(Booking)
+            .join(Slot, Booking.slot_id == Slot.id)
+            .where(Slot.guide_id == user.id)
+            .order_by(Booking.created_at.desc())
+        )
+
+    bookings = db.session.scalars(bookings).all()
+
+    return render_template(
+        "guide/bookings_list.html",
+        bookings=bookings,
+        is_guide=user.role is UserRole.GUIDE,
+    )
+
+
+# ----------------------------------------------------------------------------
+# BR-14: Booking detail page
+# ----------------------------------------------------------------------------
+
+
+@guide_bp.get("/bookings/<int:booking_id>")
+@login_required
+def booking_detail(booking_id: int):
+    """Show booking detail with status timeline.
+
+    - Traveler owner or slot's guide can view.
+    - Shows confirm/cancel buttons where allowed.
+    - Shows status timeline with from_status, to_status, actor, and time.
+    """
+    booking = db.session.scalar(
+        select(Booking).where(Booking.id == booking_id)
+    )
+    if booking is None:
+        abort(404)
+
+    # Ownership check (BR-07)
+    is_traveler = booking.traveler_id == current_user.id
+    is_guide = False
+    slot = db.session.scalar(select(Slot).where(Slot.id == booking.slot_id))
+    if slot is not None and slot.guide_id == current_user.id:
+        is_guide = True
+
+    if not is_traveler and not is_guide:
+        abort(403)
+
+    # Determine allowed actions
+    can_confirm = (
+        is_guide
+        and booking.status is BookingStatus.PENDING
+        and slot is not None
+        and slot.start_at > datetime.utcnow()
+    )
+
+    can_cancel = (
+        is_traveler
+        or is_guide
+    ) and booking.status in (BookingStatus.PENDING, BookingStatus.CONFIRMED)
+
+    # Determine if slot has started
+    slot_started = slot is not None and slot.start_at <= datetime.utcnow()
+
+    return render_template(
+        "guide/booking_detail.html",
+        booking=booking,
+        can_confirm=can_confirm,
+        can_cancel=can_cancel,
+        slot_started=slot_started,
+        now=datetime.utcnow(),
+    )
