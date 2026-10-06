@@ -6,6 +6,7 @@ from sqlalchemy import and_, func, select
 
 from app import timeutils
 from app.extensions import db
+from app.metrics import slots_created
 from app.models import Booking, BookingEvent, BookingStatus, Slot, User
 
 
@@ -60,6 +61,7 @@ def create_slot(
     )
     db.session.add(slot)
     db.session.commit()
+    slots_created.inc()
     return slot
 
 

@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app import timeutils
 from app.extensions import db
+from app.metrics import record_booking_transition
 from app.models import Booking, BookingEvent, BookingStatus, Slot
 
 
@@ -85,6 +86,7 @@ def request_booking(slot_id: int, traveler_id: int, note: str | None = None) -> 
     except IntegrityError as error:
         db.session.rollback()
         raise BookingValidationError("Could not create the booking request.") from error
+    record_booking_transition(None, BookingStatus.PENDING)
     return booking
 
 
@@ -135,6 +137,9 @@ def confirm_booking(booking_id: int, guide_id: int) -> Booking:
     except IntegrityError as error:
         db.session.rollback()
         raise BookingValidationError("Could not confirm the booking.") from error
+    record_booking_transition(BookingStatus.PENDING, BookingStatus.CONFIRMED)
+    for _ in competing_bookings:
+        record_booking_transition(BookingStatus.PENDING, BookingStatus.CANCELLED)
     return booking
 
 
@@ -169,4 +174,5 @@ def cancel_booking(
     except IntegrityError as error:
         db.session.rollback()
         raise BookingValidationError("Could not cancel the booking.") from error
+    record_booking_transition(previous_status, BookingStatus.CANCELLED)
     return booking
