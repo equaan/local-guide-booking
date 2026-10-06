@@ -123,3 +123,50 @@ def test_booking_actions_reject_started_slot(client, app, monkeypatch) -> None:
     response = client.post(f"/bookings/{booking_id}/confirm", follow_redirects=True)
 
     assert b"after the slot has started" in response.data
+
+
+def test_booking_actions_validate_input_and_hide_missing_bookings(
+    client, app, monkeypatch
+) -> None:
+    monkeypatch.setattr("app.timeutils.now_ist", lambda: NOW)
+    with app.app_context():
+        slot_id, guide_id, traveler_id, _ = _data()
+
+    _login(client, traveler_id)
+    invalid_request = client.post(
+        f"/slots/{slot_id}/book",
+        data={"note": "x" * 301},
+        follow_redirects=True,
+    )
+    assert b"Please correct the booking request." in invalid_request.data
+    assert client.post("/bookings/999/cancel", data={"reason": "x"}).status_code == 404
+
+    _login(client, guide_id)
+    assert client.post("/bookings/999/confirm").status_code == 404
+
+
+def test_traveler_cannot_cancel_after_slot_starts(client, app, monkeypatch) -> None:
+    monkeypatch.setattr("app.timeutils.now_ist", lambda: NOW)
+    with app.app_context():
+        slot_id, _, traveler_id, _ = _data()
+        slot = db.session.get(Slot, slot_id)
+        slot.start_at = NOW - timedelta(minutes=1)
+        booking = Booking(
+            slot_id=slot_id,
+            traveler_id=traveler_id,
+            status=BookingStatus.PENDING,
+        )
+        db.session.add(booking)
+        db.session.commit()
+        booking_id = booking.id
+
+    _login(client, traveler_id)
+    response = client.post(
+        f"/bookings/{booking_id}/cancel",
+        data={"reason": "Too late"},
+        follow_redirects=True,
+    )
+
+    assert b"after the slot has started" in response.data
+    with app.app_context():
+        assert db.session.get(Booking, booking_id).status is BookingStatus.PENDING
