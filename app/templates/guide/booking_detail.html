@@ -5,7 +5,7 @@
 {% block content %}
 <h1>Booking Detail</h1>
 
-<p><strong>Status:</strong> <data-testid="booking-status">{{ booking.status }}</data-testid></p>
+<p><strong>Status:</strong> <span data-testid="booking-status">{{ booking.status }}</span></p>
 
 {% if booking.slot %}
   <p><strong>Slot:</strong> {{ booking.slot.title }} with {{ booking.slot.guide.name }}{% if booking.slot.guide.city %}({{ booking.slot.guide.city }}){% endif %}</p>

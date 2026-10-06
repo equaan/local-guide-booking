@@ -165,6 +165,42 @@ def booking_detail(booking_id: int):
     # Determine if slot has started
     slot_started = slot is not None and slot.start_at <= datetime.utcnow()
 
+    # Get timeline events
+    timeline_events = db.session.scalars(
+        select(BookingEvent)
+        .where(BookingEvent.booking_id == booking.id)
+        .order_by(BookingEvent.created_at.asc())
+    ).all()
+
+    # Format timeline for template
+    timeline = []
+    for event in timeline_events:
+        # Determine action based on status transition
+        if event.from_status is None:
+            action = "Requested"
+        elif event.from_status == BookingStatus.PENDING and event.to_status == BookingStatus.CONFIRMED:
+            action = "Confirmed"
+        elif event.from_status == BookingStatus.PENDING and event.to_status == BookingStatus.CANCELLED:
+            action = "Cancelled"
+        elif event.from_status == BookingStatus.CONFIRMED and event.to_status == BookingStatus.CANCELLED:
+            action = "Cancelled"
+        else:
+            action = f"{event.from_status} to {event.to_status}"
+
+        # Get actor name
+        if event.actor_id is not None:
+            actor = db.session.scalar(
+                select(User.name).where(User.id == event.actor_id)
+            ) or "Unknown"
+        else:
+            actor = "system"
+
+        timeline.append({
+            "action": action,
+            "actor": actor,
+            "timestamp": event.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        })
+
     return render_template(
         "guide/booking_detail.html",
         booking=booking,
@@ -172,4 +208,5 @@ def booking_detail(booking_id: int):
         can_cancel=can_cancel,
         slot_started=slot_started,
         now=datetime.utcnow(),
+        timeline=timeline,
     )
