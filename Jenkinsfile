@@ -37,7 +37,7 @@ pipeline{
                     set -eu
                     mkdir -p test-results
                     . .venv-ci/bin/activate
-                    pytest --junitxml=test-results/pytest.xml
+                    python -m pytest --junitxml=test-results/pytest.xml
                 '''
             }
         }
