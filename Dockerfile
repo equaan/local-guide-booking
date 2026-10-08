@@ -3,7 +3,7 @@ FROM python:3.12-slim AS builder
 
 # Set up tool configuration variables
 ENV PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 WORKDIR /build
 
@@ -20,9 +20,9 @@ FROM python:3.12-slim AS runtime
 #Environment settings appropriate for Flask and Gunicorn
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    FLASK_ENV=production 
+    FLASK_ENV=production
 
-#Create a secure, non-root system user and group (UID/GID 10001)    
+#Create a secure, non-root system user and group (UID/GID 10001)
 RUN groupadd -g 10001 appgroup && \
 useradd -u 10001 -g appgroup -m -s /sbin/nologin appuser
 

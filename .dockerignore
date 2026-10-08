@@ -16,7 +16,7 @@ __pycache__/
 .coverage
 htmlcov/
 
-# Test Suites & Artifacts 
+# Test Suites & Artifacts
 tests/
 test-artifacts/
 test-results/
