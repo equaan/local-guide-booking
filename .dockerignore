@@ -1,0 +1,38 @@
+# Source Control
+.git
+.gitignore
+
+# Local Virtual Environments
+.venv
+.venv-ci
+.venv-runtime
+
+# Python Cache & Coverage
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Test Suites & Artifacts
+tests/
+test-artifacts/
+test-results/
+
+# Documentation & Evidence
+docs/evidence/
+
+# Local & Databases
+*.db
+*.sqlite3
+
+# Secrets & Environment Configurations
+.env
+*.env
+
+# CI/CD Output & Local Jenkins Workspaces
+Jenkinsfile
+.jenkins/
+workspace/
