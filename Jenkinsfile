@@ -61,6 +61,31 @@ pipeline{
                 }
             }
         }
+
+        stage('Deploy'){
+            steps{
+                echo "Deploying application resources to namespace lgb-dev..."
+                withCredentials([file(credentialsId: 'kubeconfig-docker-desktop', variable: 'KUBECONFIG')]){
+                sh '''
+                    set -eu
+                    kubectl --kubeconfig="$KUBECONFIG" apply -f deployment.yml
+                '''
+                }
+            }
+        }
+
+        stage('Rollout Verification'){
+            steps{
+                echo "Verifying deployment health status..."
+                withCredentials([file(credentialsId: 'kubeconfig-docker-desktop', variable: 'KUBECONFIG')]) {
+                    sh '''
+                        set -eu
+                        # The pipeline block will explicitly wait for active containers to pass probes
+                        kubectl --kubeconfig="$KUBECONFIG" -n lgb-dev rollout status deployment/local-guide-booking --timeout=90s
+                    '''
+                }
+            }
+        }
     }
 
     post{
