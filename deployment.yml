@@ -6,7 +6,7 @@ metadata:
   labels:
     app: local-guide-booking
 spec:
-  replicas: 1
+  replicas: __REPLICAS__
   selector:
     matchLabels:
       app: local-guide-booking

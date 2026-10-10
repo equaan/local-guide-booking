@@ -64,13 +64,24 @@ pipeline{
 
         stage('Deploy'){
             steps{
-                echo "Deploying application resources to namespace lgb-dev..."
+                echo "Processing deployment manifests for APP_ENV=${params.APP_ENV}..."
                 withCredentials([file(credentialsId: 'kubeconfig-docker-desktop', variable: 'KUBECONFIG')]){
-                sh '''
-                    set -eu
-                    kubectl --kubeconfig="$KUBECONFIG" apply -f deployment.yml
-                '''
+                script{
+                    // Determine replica count dynamically based on the parameter input
+                    def replicas = (params.APP_ENV == 'dev') ? '1' : '2'
+                    echo "Configuring deployment scaling to: ${replicas} replica(s)"
+
+                    sh """
+                        set -eu
+                        # Replace placeholder with calculated count and apply manifest
+                        sed "s/__REPLICAS__/${replicas}/g" deployment.yml > deployment-generated.yml
+                        kubectl --kubeconfig="\$KUBECONFIG" apply -f deployment-generated.yml
+
+                    
+                        rm -f deployment-generated.yaml
+                    """
                 }
+            }
             }
         }
 
