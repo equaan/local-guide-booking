@@ -256,10 +256,10 @@ def test_j5_traveler_cancels_confirmed_booking(driver, base_url: str) -> None:
         )
     )
     _wait(driver).until(
-        lambda browser: len(
-            browser.find_elements(By.CSS_SELECTOR, '[data-testid="timeline-item"]')
+        lambda browser: (
+            len(browser.find_elements(By.CSS_SELECTOR, '[data-testid="timeline-item"]'))
+            == 3
         )
-        == 3
     )
     _open_public_slot_list(driver, base_url, city)
     _wait(driver).until(
