@@ -78,7 +78,7 @@ pipeline{
                         kubectl --kubeconfig="\$KUBECONFIG" apply -f deployment-generated.yml
 
                     
-                        rm -f deployment-generated.yaml
+                        rm -f deployment-generated.yml
                     """
                 }
             }
