@@ -68,7 +68,7 @@ def _login(driver, base_url: str, account: Account) -> None:
     driver.get(f"{base_url}/login")
     _visible_id(driver, "email").send_keys(account.email)
     _visible_id(driver, "password").send_keys(account.password)
-    _click_id(driver, "submit-login-broken")
+    _click_id(driver, "submit-login")
     _wait(driver).until(
         ec.text_to_be_present_in_element(
             (By.CSS_SELECTOR, '[data-testid="nav-user"]'), account.name
