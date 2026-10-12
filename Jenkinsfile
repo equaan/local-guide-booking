@@ -58,6 +58,7 @@ pipeline{
                     rm -f "$e2e_database"
                     export APP_ENV=dev
                     export DATABASE_URL="sqlite:///$e2e_database"
+                    rm -rf test-artifacts
 
                     python -m flask --app wsgi db upgrade
                     python -m gunicorn --bind 0.0.0.0:8000 --workers 1 wsgi:app \
