@@ -196,6 +196,79 @@ pipeline{
             }
         }
 
+        stage('Update GitOps Manifest') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'github-gitops-writer',
+                        usernameVariable: 'GIT_USERNAME',
+                        passwordVariable: 'GIT_TOKEN'
+                    )
+                ]) {
+                    sh '''
+                        set -eu
+                        set +x
+
+                        gitops_dir="$WORKSPACE/gitops-worktree"
+                        askpass="$WORKSPACE/gitops-askpass.sh"
+
+                        cleanup() {
+                            rm -rf "$gitops_dir"
+                            rm -f "$askpass"
+                        }
+                        trap cleanup EXIT
+
+                        cat > "$askpass" <<'EOF'
+#!/bin/sh
+case "$1" in
+    *Username*) printf '%s\\n' "$GIT_USERNAME" ;;
+    *Password*) printf '%s\\n' "$GIT_TOKEN" ;;
+esac
+EOF
+                        chmod 700 "$askpass"
+                        export GIT_ASKPASS="$askpass"
+                        export GIT_TERMINAL_PROMPT=0
+
+                        git clone --depth 1 --branch main \
+                            https://github.com/equaan/local-guide-booking-gitops.git \
+                            "$gitops_dir"
+
+                        cd "$gitops_dir"
+
+                        manifest="apps/local-guide-booking/deployment.yml"
+                        test -f "$manifest"
+
+                        if ! grep -qE \
+                            '^[[:space:]]*image:[[:space:]]*equaan/local-guide-booking:' \
+                            "$manifest"; then
+                            echo "Expected Local Guide Booking image line was not found."
+                            exit 1
+                        fi
+
+                        sed -i \
+                            "s|^\\([[:space:]]*image:[[:space:]]*\\)equaan/local-guide-booking:.*$|\\1${IMAGE_REF}|" \
+                            "$manifest"
+
+                        grep -qE \
+                            "^[[:space:]]*image:[[:space:]]*${IMAGE_REF}$" \
+                            "$manifest"
+
+                        git config user.name "Jenkins CI"
+                        git config user.email "jenkins@local-guide-booking.invalid"
+
+                        if git diff --quiet -- "$manifest"; then
+                            echo "GitOps manifest already uses ${IMAGE_REF}."
+                            exit 0
+                        fi
+
+                        git add "$manifest"
+                        git commit -m "deploy: local-guide-booking ${IMAGE_TAG}"
+                        git push origin main
+                    '''
+                }
+            }
+        }
+
         stage('Package'){
             steps{
                 echo 'Archiving the build and test artifacts...'
