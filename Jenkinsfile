@@ -155,57 +155,7 @@ pipeline{
                 echo 'Archiving the build and test artifacts...'
                 archiveArtifacts artifacts: 'requirements.lock, pyproject.toml, sonar-project.properties', allowEmptyArchive: false
             }
-        }
-
-        stage('Cluster Check'){
-            steps{
-                echo 'Checking cluster namespace status...'
-
-                withCredentials([file(credentialsId: 'kubeconfig-docker-desktop', variable: 'KUBECONFIG')]) {
-                    sh '''
-                        set -eu
-                        kubectl --kubeconfig="$KUBECONFIG" -n lgb-dev get namespace lgb-dev
-                    '''
-                }
-            }
-        }
-
-
-        stage('Deploy'){
-            steps{
-                echo "Processing deployment manifests for APP_ENV=${params.APP_ENV}..."
-                withCredentials([file(credentialsId: 'kubeconfig-docker-desktop', variable: 'KUBECONFIG')]){
-                script{
-                    // Determine replica count dynamically based on the parameter input
-                    def replicas = (params.APP_ENV == 'dev') ? '1' : '2'
-                    echo "Configuring deployment scaling to: ${replicas} replica(s)"
-
-                    sh """
-                        set -eu
-                        # Replace placeholder with calculated count and apply manifest
-                        sed "s/__REPLICAS__/${replicas}/g" deployment.yml > deployment-generated.yml
-                        kubectl --kubeconfig="\$KUBECONFIG" apply -f deployment-generated.yml
-
-                    
-                        rm -f deployment-generated.yml
-                    """
-                }
-            }
-            }
-        }
-
-        stage('Rollout Verification'){
-            steps{
-                echo "Verifying deployment health status..."
-                withCredentials([file(credentialsId: 'kubeconfig-docker-desktop', variable: 'KUBECONFIG')]) {
-                    sh '''
-                        set -eu
-                        # The pipeline block will explicitly wait for active containers to pass probes
-                        kubectl --kubeconfig="$KUBECONFIG" -n lgb-dev rollout status deployment/local-guide-booking --timeout=90s
-                    '''
-                }
-            }
-        }
+        }     
     }
 
     post{
