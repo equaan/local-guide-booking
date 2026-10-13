@@ -160,12 +160,15 @@ pipeline{
                         -v /var/run/docker.sock:/var/run/docker.sock:ro \
                         -v trivy-cache:/root/.cache \
                         aquasec/trivy:0.74.0 image \
+                        --db-repository ghcr.io/aquasecurity/trivy-db:2 \
+                        --db-repository public.ecr.aws/aquasecurity/trivy-db:2 \
                         --image-src docker \
                         --scanners vuln \
                         --severity HIGH,CRITICAL \
                         --ignore-unfixed \
                         --exit-code 1 \
                         --timeout 15m \
+                        --no-progress \
                         "$IMAGE_REF"
                 '''
             }
