@@ -150,6 +150,25 @@ pipeline{
             }
         }
 
+        stage('Trivy Image Scan') {
+            steps {
+                echo "Scanning ${env.IMAGE_REF} for fixable HIGH and CRITICAL vulnerabilities..."
+
+                sh '''
+                    set -eu
+                    docker run --rm \
+                        -v /var/run/docker.sock:/var/run/docker.sock:ro \
+                        aquasec/trivy:0.74.0 image \
+                        --image-src docker \
+                        --scanners vuln \
+                        --severity HIGH,CRITICAL \
+                        --ignore-unfixed \
+                        --exit-code 1 \
+                        "$IMAGE_REF"
+                '''
+            }
+        }
+
         stage('Package'){
             steps{
                 echo 'Archiving the build and test artifacts...'
