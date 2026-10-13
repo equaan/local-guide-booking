@@ -128,6 +128,28 @@ pipeline{
             }
         }
 
+        stage('Build Container Image') {
+            steps {
+                script {
+                    def gitSha = sh(
+                        script: 'git rev-parse --short=12 HEAD',
+                        returnStdout: true
+                    ).trim()
+
+                    env.IMAGE_TAG = "v0.1.0-${env.BUILD_NUMBER}-${gitSha}"
+                    env.IMAGE_REF = "equaan/local-guide-booking:${env.IMAGE_TAG}"
+
+                    echo "Building immutable image: ${env.IMAGE_REF}"
+
+                    sh '''
+                        set -eu
+                        docker build --pull -t "$IMAGE_REF" .
+                        docker image inspect "$IMAGE_REF" --format '{{.Id}}'
+                    '''
+                }
+            }
+        }
+
         stage('Package'){
             steps{
                 echo 'Archiving the build and test artifacts...'
