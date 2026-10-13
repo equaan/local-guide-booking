@@ -169,6 +169,28 @@ pipeline{
             }
         }
 
+        stage('Push Container Image') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-local-guide-booking',
+                        usernameVariable: 'DOCKERHUB_USERNAME',
+                        passwordVariable: 'DOCKERHUB_TOKEN'
+                    )
+                ]) {
+                    sh '''
+                        set -eu
+                        trap 'docker logout || true' EXIT
+
+                        printf '%s' "$DOCKERHUB_TOKEN" | \
+                            docker login --username "$DOCKERHUB_USERNAME" --password-stdin
+
+                        docker push "$IMAGE_REF"
+                    '''
+                }
+            }
+        }
+
         stage('Package'){
             steps{
                 echo 'Archiving the build and test artifacts...'
