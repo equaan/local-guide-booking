@@ -1,0 +1,202 @@
+---
+- name: Prepare the Ubuntu target
+  hosts: localhost
+  connection: local
+  become: true
+
+  vars:
+    k3s_version: v1.34.11+k3s1
+    k3s_api_port: 6444
+    jenkins_name: lgb-jenkins
+    jenkins_image: jenkins/jenkins:2.541.3-jdk17
+    jenkins_http_port: 8081
+    jenkins_agent_port: 50001
+
+  pre_tasks:
+    - name: Check for malformed WSL mount entries
+      ansible.builtin.command:
+        argv:
+          - awk
+          - NF != 6 { exit 1 }
+          - /proc/mounts
+      register: mount_format_check
+      changed_when: false
+      failed_when: false
+
+    - name: Require valid mount metadata for K3s
+      ansible.builtin.assert:
+        that: mount_format_check.rc == 0
+        fail_msg: >-
+          K3s cannot start while Docker Desktop WSL integration creates malformed
+          /proc/mounts entries. Disable WSL integration for this Ubuntu distro,
+          apply the Docker Desktop change, then run wsl --shutdown from Windows.
+
+    - name: Check for the Docker Desktop WSL host mount
+      ansible.builtin.command:
+        argv:
+          - grep
+          - -q
+          - /Docker/host
+          - /proc/mounts
+      register: docker_host_mount
+      changed_when: false
+      failed_when: false
+
+    - name: Require Docker Desktop WSL integration to be disabled
+      ansible.builtin.assert:
+        that: docker_host_mount.rc != 0
+        fail_msg: >-
+          Disable Docker Desktop WSL integration for this Ubuntu distro before
+          provisioning K3s. Native Docker is installed by this playbook instead.
+
+  tasks:
+    - name: Install prerequisite packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - python3
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install Docker Engine and Compose plugin
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-compose-v2
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Add the Ubuntu user to the Docker group
+      ansible.builtin.user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: true
+
+    - name: Enable and start Docker
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Create the K3s configuration directory
+      ansible.builtin.file:
+        path: /etc/rancher/k3s
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Configure the K3s API port
+      ansible.builtin.copy:
+        dest: /etc/rancher/k3s/config.yaml
+        content: |
+          https-listen-port: {{ k3s_api_port }}
+          write-kubeconfig-mode: "0644"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart K3s
+
+    - name: Install K3s single-node server
+      ansible.builtin.shell: curl -sfL https://get.k3s.io | sh -
+      args:
+        creates: /usr/local/bin/k3s
+      environment:
+        INSTALL_K3S_VERSION: "{{ k3s_version }}"
+        INSTALL_K3S_EXEC: server
+
+    - name: Enable and start K3s
+      ansible.builtin.systemd:
+        name: k3s
+        enabled: true
+        state: started
+
+    - name: Check the Jenkins data volume
+      ansible.builtin.command:
+        argv:
+          - docker
+          - volume
+          - inspect
+          - "{{ jenkins_name }}_home"
+      register: jenkins_volume
+      changed_when: false
+      failed_when: false
+
+    - name: Create the Jenkins data volume
+      ansible.builtin.command:
+        argv:
+          - docker
+          - volume
+          - create
+          - "{{ jenkins_name }}_home"
+      when: jenkins_volume.rc != 0
+
+    - name: Check the Jenkins container
+      ansible.builtin.command:
+        argv:
+          - docker
+          - container
+          - inspect
+          - "{{ jenkins_name }}"
+      register: jenkins_container
+      changed_when: false
+      failed_when: false
+
+    - name: Create the Jenkins container
+      ansible.builtin.command:
+        argv:
+          - docker
+          - run
+          - --detach
+          - --name
+          - "{{ jenkins_name }}"
+          - --restart
+          - unless-stopped
+          - --publish
+          - "127.0.0.1:{{ jenkins_http_port }}:8080"
+          - --publish
+          - "127.0.0.1:{{ jenkins_agent_port }}:50000"
+          - --volume
+          - "{{ jenkins_name }}_home:/var/jenkins_home"
+          - "{{ jenkins_image }}"
+      when: jenkins_container.rc != 0
+
+    - name: Check whether the existing Jenkins container is running
+      ansible.builtin.command:
+        argv:
+          - docker
+          - container
+          - inspect
+          - --format
+          - "{{ '{{' }}.State.Running{{ '}}' }}"
+          - "{{ jenkins_name }}"
+      register: jenkins_running
+      changed_when: false
+      when: jenkins_container.rc == 0
+
+    - name: Start an existing stopped Jenkins container
+      ansible.builtin.command:
+        argv:
+          - docker
+          - container
+          - start
+          - "{{ jenkins_name }}"
+      when:
+        - jenkins_container.rc == 0
+        - jenkins_running.stdout != "true"
+
+    - name: Wait for Jenkins to listen locally
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: "{{ jenkins_http_port }}"
+        delay: 2
+        timeout: 180
+
+  handlers:
+    - name: Restart K3s
+      ansible.builtin.systemd:
+        name: k3s
+        state: restarted
