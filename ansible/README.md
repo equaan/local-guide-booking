@@ -52,3 +52,28 @@ sudo /usr/local/bin/k3s kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml get appli
 ```
 
 The initial Argo CD password is intentionally never written to the repository.
+
+## Task 15 Monitoring
+
+The same `gitops.yml` playbook also provisions a small monitoring stack through
+Argo CD. It pins Prometheus chart `29.37.0` and Grafana chart `10.5.15`.
+Prometheus retains 24 hours of ephemeral data and scrapes the in-cluster Local
+Guide Booking `/metrics` endpoint every 15 seconds. Grafana provisions its
+Prometheus datasource and the Local Guide Booking overview dashboard from code.
+
+The Grafana administrator password is generated once as the
+`lgb-grafana-admin` Kubernetes Secret. It is never stored in Git or printed by
+the playbook.
+
+```bash
+ansible-playbook -i ansible/inventory.ini ansible/gitops.yml --ask-become-pass
+sudo /usr/local/bin/k3s kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml get pods -n monitoring
+sudo /usr/local/bin/k3s kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml get application -n argocd
+```
+
+To inspect the Grafana dashboard locally, port-forward the service:
+
+```bash
+sudo /usr/local/bin/k3s kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml \
+  -n monitoring port-forward service/lgb-grafana 3000:80
+```
