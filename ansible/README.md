@@ -37,3 +37,18 @@ curl -I http://127.0.0.1:8081/login
 
 Run the playbook twice. The second run should report no changes except an
 initial Jenkins image pull or a service restart caused by a changed K3s config.
+
+## Task 14 GitOps Control Plane
+
+`gitops.yml` installs checksum-pinned Helm `v3.22.0`, then installs the pinned
+Argo CD chart `10.10.3` with Dex, notifications, and the ApplicationSet
+controller disabled for the local 8 GB lab machine. It creates an Argo CD
+Application that reconciles the public GitOps repository into `lgb-dev`.
+
+```bash
+ansible-playbook -i ansible/inventory.ini ansible/gitops.yml --ask-become-pass
+sudo /usr/local/bin/k3s kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml get pods -n argocd
+sudo /usr/local/bin/k3s kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml get application -n argocd
+```
+
+The initial Argo CD password is intentionally never written to the repository.

@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: local-guide-booking
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/equaan/local-guide-booking-gitops.git
+    targetRevision: main
+    path: apps/local-guide-booking
+    helm:
+      releaseName: local-guide-booking
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: lgb-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

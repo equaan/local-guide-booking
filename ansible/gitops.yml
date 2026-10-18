@@ -1,0 +1,172 @@
+---
+- name: Install the GitOps control plane on the Ubuntu target
+  hosts: localhost
+  connection: local
+  become: true
+
+  vars:
+    helm_version: v3.22.0
+    helm_archive_checksum: sha256:1e4ab49e429626cf6c6958d914248b78c9730803c2751b87627e171dc800e7bb
+    helm_archive_path: /tmp/helm-v3.22.0-linux-amd64.tar.gz
+    helm_unpack_path: /tmp/lgb-helm
+    argocd_namespace: argocd
+    argocd_chart_version: 10.10.3
+    k3s_kubeconfig: /etc/rancher/k3s/k3s.yaml
+
+  pre_tasks:
+    - name: Copy the Local Guide Booking ArgoCD application manifest
+      ansible.builtin.copy:
+        src: ../argocd/local-guide-booking-application.yaml
+        dest: /tmp/lgb-application.yaml
+        owner: root
+        group: root
+        mode: "0600"
+
+  tasks:
+    - name: Require a supported target architecture
+      ansible.builtin.assert:
+        that: ansible_architecture == "x86_64"
+        fail_msg: This lab playbook currently supports Linux x86_64 only.
+
+    - name: Check that K3s is running
+      ansible.builtin.command:
+        argv:
+          - systemctl
+          - is-active
+          - --quiet
+          - k3s
+      changed_when: false
+
+    - name: Download the pinned Helm archive
+      ansible.builtin.get_url:
+        url: "https://get.helm.sh/helm-{{ helm_version }}-linux-amd64.tar.gz"
+        dest: "{{ helm_archive_path }}"
+        checksum: "{{ helm_archive_checksum }}"
+        mode: "0644"
+
+    - name: Unpack Helm
+      ansible.builtin.unarchive:
+        src: "{{ helm_archive_path }}"
+        dest: "{{ helm_unpack_path }}"
+        remote_src: true
+        creates: "{{ helm_unpack_path }}/linux-amd64/helm"
+
+    - name: Install the Helm binary
+      ansible.builtin.copy:
+        src: "{{ helm_unpack_path }}/linux-amd64/helm"
+        dest: /usr/local/bin/helm
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Add the Argo Helm repository
+      ansible.builtin.command:
+        argv:
+          - helm
+          - repo
+          - add
+          - argo
+          - https://argoproj.github.io/argo-helm
+          - --force-update
+      changed_when: false
+
+    - name: Update the Argo Helm repository cache
+      ansible.builtin.command: helm repo update argo
+      changed_when: false
+
+    - name: Write small-footprint ArgoCD values
+      ansible.builtin.copy:
+        dest: /tmp/lgb-argocd-values.yaml
+        content: |
+          dex:
+            enabled: false
+          notifications:
+            enabled: false
+          applicationSet:
+            replicas: 0
+          redis-ha:
+            enabled: false
+          server:
+            service:
+              type: ClusterIP
+          configs:
+            cm:
+              timeout.reconciliation: 30s
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Check whether ArgoCD is already installed
+      ansible.builtin.command:
+        argv:
+          - helm
+          - status
+          - argocd
+          - --namespace
+          - "{{ argocd_namespace }}"
+      register: argocd_release
+      changed_when: false
+      failed_when: false
+
+    - name: Install the pinned ArgoCD Helm chart
+      ansible.builtin.command:
+        argv:
+          - helm
+          - install
+          - argocd
+          - argo/argo-cd
+          - --version
+          - "{{ argocd_chart_version }}"
+          - --namespace
+          - "{{ argocd_namespace }}"
+          - --create-namespace
+          - --values
+          - /tmp/lgb-argocd-values.yaml
+          - --wait
+          - --timeout
+          - 10m
+      when: argocd_release.rc != 0
+
+    - name: Wait for the ArgoCD application controller
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/k3s
+          - kubectl
+          - --kubeconfig
+          - "{{ k3s_kubeconfig }}"
+          - rollout
+          - status
+          - statefulset/argocd-application-controller
+          - --namespace
+          - "{{ argocd_namespace }}"
+          - --timeout=5m
+      changed_when: false
+
+    - name: Check whether the Local Guide Booking application exists
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/k3s
+          - kubectl
+          - --kubeconfig
+          - "{{ k3s_kubeconfig }}"
+          - get
+          - application
+          - local-guide-booking
+          - --namespace
+          - "{{ argocd_namespace }}"
+      register: application_resource
+      changed_when: false
+      failed_when: false
+
+    - name: Create the Local Guide Booking ArgoCD application
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/k3s
+          - kubectl
+          - --kubeconfig
+          - "{{ k3s_kubeconfig }}"
+          - apply
+          - --filename
+          - /tmp/lgb-application.yaml
+      when: application_resource.rc != 0
