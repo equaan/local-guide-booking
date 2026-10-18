@@ -109,6 +109,8 @@
       ansible.builtin.command:
         argv:
           - helm
+          - --kubeconfig
+          - "{{ k3s_kubeconfig }}"
           - status
           - argocd
           - --namespace
@@ -121,6 +123,8 @@
       ansible.builtin.command:
         argv:
           - helm
+          - --kubeconfig
+          - "{{ k3s_kubeconfig }}"
           - install
           - argocd
           - argo/argo-cd
