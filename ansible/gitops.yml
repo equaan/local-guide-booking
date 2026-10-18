@@ -265,7 +265,43 @@
         'created' in monitoring_applications.stdout or
         'configured' in monitoring_applications.stdout
 
-    - name: Wait for the Prometheus server
+    - name: Wait for monitoring applications to synchronize
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/k3s
+          - kubectl
+          - --kubeconfig
+          - "{{ k3s_kubeconfig }}"
+          - wait
+          - "--for=jsonpath={.status.sync.status}=Synced"
+          - "application/{{ item }}"
+          - --namespace
+          - "{{ argocd_namespace }}"
+          - --timeout=5m
+      loop:
+        - lgb-prometheus
+        - lgb-grafana
+      changed_when: false
+
+    - name: Wait for monitoring applications to become healthy
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/k3s
+          - kubectl
+          - --kubeconfig
+          - "{{ k3s_kubeconfig }}"
+          - wait
+          - "--for=jsonpath={.status.health.status}=Healthy"
+          - "application/{{ item }}"
+          - --namespace
+          - "{{ argocd_namespace }}"
+          - --timeout=5m
+      loop:
+        - lgb-prometheus
+        - lgb-grafana
+      changed_when: false
+
+    - name: Verify the Prometheus server rollout
       ansible.builtin.command:
         argv:
           - /usr/local/bin/k3s
@@ -280,7 +316,7 @@
           - --timeout=5m
       changed_when: false
 
-    - name: Wait for Grafana
+    - name: Verify the Grafana rollout
       ansible.builtin.command:
         argv:
           - /usr/local/bin/k3s
