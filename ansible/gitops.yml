@@ -10,17 +10,22 @@
     helm_archive_path: /tmp/helm-v3.22.0-linux-amd64.tar.gz
     helm_unpack_path: /tmp/lgb-helm
     argocd_namespace: argocd
+    monitoring_namespace: monitoring
     argocd_chart_version: 10.10.3
     k3s_kubeconfig: /etc/rancher/k3s/k3s.yaml
 
   pre_tasks:
-    - name: Copy the Local Guide Booking ArgoCD application manifest
+    - name: Copy ArgoCD application manifests
       ansible.builtin.copy:
-        src: ../argocd/local-guide-booking-application.yaml
-        dest: /tmp/lgb-application.yaml
+        src: "../argocd/{{ item }}"
+        dest: "/tmp/{{ item }}"
         owner: root
         group: root
         mode: "0600"
+      loop:
+        - local-guide-booking-application.yaml
+        - prometheus-application.yaml
+        - grafana-application.yaml
 
   tasks:
     - name: Require a supported target architecture
@@ -168,5 +173,120 @@
           - "{{ k3s_kubeconfig }}"
           - apply
           - --filename
-          - /tmp/lgb-application.yaml
+          - /tmp/local-guide-booking-application.yaml
       when: application_resource.rc != 0
+
+    - name: Check whether the monitoring namespace exists
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/k3s
+          - kubectl
+          - --kubeconfig
+          - "{{ k3s_kubeconfig }}"
+          - get
+          - namespace
+          - "{{ monitoring_namespace }}"
+      register: monitoring_namespace_resource
+      changed_when: false
+      failed_when: false
+
+    - name: Create the monitoring namespace
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/k3s
+          - kubectl
+          - --kubeconfig
+          - "{{ k3s_kubeconfig }}"
+          - create
+          - namespace
+          - "{{ monitoring_namespace }}"
+      when: monitoring_namespace_resource.rc != 0
+
+    - name: Check whether the Grafana admin secret exists
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/k3s
+          - kubectl
+          - --kubeconfig
+          - "{{ k3s_kubeconfig }}"
+          - get
+          - secret
+          - lgb-grafana-admin
+          - --namespace
+          - "{{ monitoring_namespace }}"
+      register: grafana_admin_secret
+      changed_when: false
+      failed_when: false
+
+    - name: Generate a Grafana admin password
+      ansible.builtin.command: openssl rand -base64 32
+      register: grafana_admin_password
+      changed_when: false
+      no_log: true
+      when: grafana_admin_secret.rc != 0
+
+    - name: Create the Grafana admin secret
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/k3s
+          - kubectl
+          - --kubeconfig
+          - "{{ k3s_kubeconfig }}"
+          - create
+          - secret
+          - generic
+          - lgb-grafana-admin
+          - --namespace
+          - "{{ monitoring_namespace }}"
+          - --from-literal=admin-user=admin
+          - "--from-literal=admin-password={{ grafana_admin_password.stdout }}"
+      no_log: true
+      when: grafana_admin_secret.rc != 0
+
+    - name: Apply the monitoring ArgoCD applications
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/k3s
+          - kubectl
+          - --kubeconfig
+          - "{{ k3s_kubeconfig }}"
+          - apply
+          - --filename
+          - "/tmp/{{ item }}"
+      loop:
+        - prometheus-application.yaml
+        - grafana-application.yaml
+      register: monitoring_applications
+      changed_when: >-
+        'created' in monitoring_applications.stdout or
+        'configured' in monitoring_applications.stdout
+
+    - name: Wait for the Prometheus server
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/k3s
+          - kubectl
+          - --kubeconfig
+          - "{{ k3s_kubeconfig }}"
+          - rollout
+          - status
+          - deployment/lgb-prometheus-server
+          - --namespace
+          - "{{ monitoring_namespace }}"
+          - --timeout=5m
+      changed_when: false
+
+    - name: Wait for Grafana
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/k3s
+          - kubectl
+          - --kubeconfig
+          - "{{ k3s_kubeconfig }}"
+          - rollout
+          - status
+          - deployment/lgb-grafana
+          - --namespace
+          - "{{ monitoring_namespace }}"
+          - --timeout=5m
+      changed_when: false
