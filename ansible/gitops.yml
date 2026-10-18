@@ -44,6 +44,14 @@
         checksum: "{{ helm_archive_checksum }}"
         mode: "0644"
 
+    - name: Create the Helm unpack directory
+      ansible.builtin.file:
+        path: "{{ helm_unpack_path }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
     - name: Unpack Helm
       ansible.builtin.unarchive:
         src: "{{ helm_archive_path }}"
