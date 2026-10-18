@@ -196,7 +196,7 @@ pipeline{
             }
         }
 
-        stage('Update GitOps Manifest') {
+        stage('Update GitOps Release') {
             steps {
                 withCredentials([
                     usernamePassword(
@@ -235,33 +235,33 @@ EOF
 
                         cd "$gitops_dir"
 
-                        manifest="apps/local-guide-booking/deployment.yml"
-                        test -f "$manifest"
+                        values_file="apps/local-guide-booking/values.yaml"
+                        test -f "$values_file"
 
                         if ! grep -qE \
-                            '^[[:space:]]*image:[[:space:]]*equaan/local-guide-booking:' \
-                            "$manifest"; then
-                            echo "Expected Local Guide Booking image line was not found."
+                            '^[[:space:]]*repository:[[:space:]]*equaan/local-guide-booking[[:space:]]*$' \
+                            "$values_file"; then
+                            echo "Expected Local Guide Booking image repository was not found."
                             exit 1
                         fi
 
                         sed -i \
-                            "s|^\\([[:space:]]*image:[[:space:]]*\\)equaan/local-guide-booking:.*$|\\1${IMAGE_REF}|" \
-                            "$manifest"
+                            "s|^\\([[:space:]]*tag:[[:space:]]*\\).*|\\1${IMAGE_TAG}|" \
+                            "$values_file"
 
                         grep -qE \
-                            "^[[:space:]]*image:[[:space:]]*${IMAGE_REF}$" \
-                            "$manifest"
+                            "^[[:space:]]*tag:[[:space:]]*${IMAGE_TAG}$" \
+                            "$values_file"
 
                         git config user.name "Jenkins CI"
                         git config user.email "jenkins@local-guide-booking.invalid"
 
-                        if git diff --quiet -- "$manifest"; then
-                            echo "GitOps manifest already uses ${IMAGE_REF}."
+                        if git diff --quiet -- "$values_file"; then
+                            echo "GitOps chart already uses ${IMAGE_REF}."
                             exit 0
                         fi
 
-                        git add "$manifest"
+                        git add "$values_file"
                         git commit -m "deploy: local-guide-booking ${IMAGE_TAG}"
                         git push origin main
                     '''
