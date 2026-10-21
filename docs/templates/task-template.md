@@ -1,7 +1,8 @@
 # Task N: Title
 
-Student: Mohammad Equaan Kacchi | Roll No: 67 | ID: 23102A0073 | BE-VII Division A
+Student: Mohammad Equaan Kacchi | Roll No: 23102A0073 | BE-VII Division A
 Project: Local Guide Booking System, DevSecOps CI/CD on Kubernetes
+Faculty: Snehal Andhare, Ma'am
 Date completed: DD-MM-YYYY
 
 ## 1. Objective
@@ -27,9 +28,16 @@ Quote the original task text from the course sheet here, word for word.
 
 ## 5. Evidence
 
-- Screenshot: docs/evidence/task-NN/name.png (add a caption saying what it proves)
 - Repository, commit, pull request or build link:
 - Log excerpt:
+
+### Screenshot Evidence
+
+::: {custom-style="ScreenshotPlaceholder"}
+**Screenshot placeholder - Figure N.1**
+
+Paste a readable screenshot here. Caption: state exactly what this screenshot proves.
+:::
 
 ## 6. Problems faced and how I fixed them
 

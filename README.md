@@ -1,62 +1,152 @@
 # Local Guide Booking System
 
-A small Flask web application plus a complete DevSecOps delivery pipeline: Git, Jenkins, SonarQube, Trivy, Selenium, Docker Hub, ArgoCD, Kubernetes, Prometheus and Grafana.
+A small Flask application for guide availability and traveler bookings, delivered through a local DevSecOps pipeline.
 
-- Student: Mohammad Equaan Kacchi | Roll No 67 | ID 23102A0073 | BE-VII Computer Engineering, Division A
-- Course: DevOps project, Academic Year 2026-27 (ODD semester)
-- Course project title: Selenium Testing for a Local Guide Booking System
+Travelers browse a guide's future availability slots and request bookings. Guides manage their slots and confirm or cancel requests. The project demonstrates the full path from tested source code to a monitored Kubernetes release: Jenkins, Selenium, SonarQube, Trivy, Docker Hub, Argo CD, K3s, Prometheus, and Grafana.
 
-## What the application does
+## Highlights
 
-Travelers browse a guide's availability slots and request a booking. Guides confirm or cancel. Everyone can see the status history of a booking. Full requirements: [docs/PRD.md](docs/PRD.md).
+- Role-based traveler and guide accounts with CSRF-protected authentication.
+- Guide slot creation, overlap prevention, public browsing, and city/date filtering.
+- Transactional booking state machine: PENDING, CONFIRMED, and CANCELLED.
+- Database-enforced prevention of duplicate active and confirmed bookings.
+- Unit, integration, and Selenium acceptance tests.
+- Health, readiness, request logging, and Prometheus metrics.
+- CI quality gates, non-root Docker image, image vulnerability scanning, GitOps deployment, rollback rehearsal, and monitoring.
 
-## Status
+## Architecture
 
-| Course task | Title | Status |
-|---|---|---|
-| 1 | Problem Definition and Scope | Drafted, needs validation evidence |
-| 2 | Agile Planning and DevOps Workflow | Drafted, needs board screenshots |
-| 3 | Requirements, Architecture and Technology Setup | Not started |
-| 4 | Git and GitHub Repository Initialization | Not started |
-| 5 | Feature Development with Branching | Not started |
-| 6 | MVP Completion and Git Collaboration | Not started |
-| 7 | Jenkins Installation and Continuous Integration Job | Not started |
-| 8 | Pipeline as Code and Deployment | Not started |
-| 9 | Selenium Test Design and Local Execution | Not started |
-| 10 | Continuous Testing and Quality Gates in Jenkins | Not started |
-| 11 | Docker Image and Container Lifecycle | Not started |
-| 12 | Jenkins-Docker Continuous Delivery | Not started |
-| 13 | Configuration Management and Cluster Setup | Not started |
-| 14 | Automated Provisioning, GitOps and Reliability Validation | Not started |
-| 15 | Final End-to-End Release, Observability, Documentation and Viva | Not started |
+~~~
+Browser
+  -> Flask + Jinja + SQLAlchemy
+  -> SQLite locally (PostgreSQL-compatible through DATABASE_URL)
 
-## Quick start
+Git push
+  -> Jenkins: test -> Selenium -> SonarQube gate -> Docker build -> Trivy
+  -> Docker Hub immutable image
+  -> GitOps repository image-tag commit
+  -> Argo CD -> K3s
+  -> Prometheus -> Grafana
+~~~
 
-Available after work item B-00 is merged. Commands are in [AGENTS.md](AGENTS.md) section 3.
+## Quick Start
 
-## Repository map
+Python 3.11+ is required; Python 3.12 is the target runtime.
 
-| Path | Contents |
+~~~
+git clone https://github.com/equaan/local-guide-booking.git
+cd local-guide-booking
+
+python -m venv .venv
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
+# macOS/Linux
+# source .venv/bin/activate
+
+pip install -r requirements-dev.txt
+# Windows PowerShell
+Copy-Item .env.example .env
+# macOS/Linux
+# cp .env.example .env
+
+flask --app wsgi db upgrade
+python scripts/seed.py
+flask --app wsgi run --debug
+~~~
+
+Open http://127.0.0.1:5000. The seed script is idempotent, so it is safe to run again.
+
+For complete local, Docker, CI, Selenium, WSL/K3s, GitOps, Prometheus, and Grafana instructions, read **[SETUP.md](SETUP.md)**.
+
+## Verification
+
+~~~
+# Unit and integration tests. E2E tests are excluded by default.
+python -m pytest
+python -m pytest --cov=app --cov-report=term-missing
+
+# Code quality and security checks
+ruff check .
+ruff format --check .
+bandit -r app -q
+~~~
+
+While the application is running, inspect:
+
+- http://127.0.0.1:5000/health
+- http://127.0.0.1:5000/ready
+- http://127.0.0.1:5000/metrics
+
+The project includes 51 unit/integration checks and five Selenium acceptance journeys. A prior full coverage review recorded 94% coverage of app.
+
+## Features
+
+| Area | Behaviour |
 |---|---|
-| `docs/PRD.md` | Product requirements (source of truth for behaviour) |
-| `docs/TASKS.md` | Task tracker and build work items with acceptance checks |
-| `docs/PROMPTS.md` | Prompts used with the coding agent and coach prompts for DevOps tasks |
-| `docs/task-NN.md` | One report per course task (merged into the final PDF) |
-| `docs/00-*.md` | Deviations register and rewritten task list |
-| `docs/AI-USAGE-LOG.md` | Honest log of AI assistance and what was reviewed |
-| `AGENTS.md` | Rules for coding agents |
-| `CONTRIBUTING.md` | Branch, commit and PR policy |
-| `app/`, `tests/`, `migrations/` | Application code (created by work items) |
+| Accounts | Case-insensitive unique email, hashed password, 8-character minimum, city required for guides |
+| Slots | Future active slots, duration/price validation, overlap prevention, guide ownership checks |
+| Bookings | Traveler request, guide confirmation, cancellation, automatic competing-request cancellation |
+| Data integrity | Partial unique indexes enforce one confirmed booking per slot and one active booking per traveler/slot pair |
+| Security | CSRF, safe errors, session-cookie protections, role/resource ownership checks |
+| Observability | Health, readiness, metrics, request durations/logging, booking and registration counters |
 
-## Building the report
+## Acceptance Journeys
 
-```bash
-pip install -r requirements-docs.txt    # also install pandoc
-bash scripts/build_report.sh            # writes build/report.docx
-```
+The Selenium suite covers five independent browser journeys:
 
-Open the .docx in Word, review, then export to PDF for submission.
+1. Traveler registration, logout, and login.
+2. Guide registration and future-slot publication.
+3. Traveler booking request with PENDING status.
+4. Guide confirmation with CONFIRMED status.
+5. Traveler cancellation, complete timeline, and returned slot availability.
 
-## Companion repository
+## DevSecOps Delivery Flow
 
-Kubernetes manifests and Helm chart live in a separate GitOps repository, `local-guide-gitops` (created in Task 4, used from Task 12).
+1. Jenkins creates a clean virtual environment and runs pytest with JUnit and coverage output.
+2. Jenkins starts a temporary Gunicorn application and runs the Selenium suite through a remote Chrome container.
+3. SonarQube analyzes the code and its webhook-driven quality gate blocks failing builds.
+4. Jenkins builds a multi-stage, non-root Docker image with an immutable version/build/Git-SHA tag.
+5. Trivy scans the image for fixable HIGH and CRITICAL vulnerabilities before publication.
+6. Jenkins pushes the image to Docker Hub and updates only the image tag in the separate GitOps repository.
+7. Argo CD observes that GitOps commit and reconciles it to the local K3s cluster.
+8. Prometheus scrapes application metrics and Grafana displays request, latency, error, and booking-transition panels.
+
+The deployed local-lab release uses immutable Docker Hub image tags, including `equaan/local-guide-booking:v0.1.0-22-3d72a976732d`.
+
+## Repository Layout
+
+~~~
+app/                 Flask application, services, blueprints, templates, metrics
+migrations/          Alembic migration history
+tests/               Unit, integration, and Selenium E2E suites
+scripts/             Seed data and report-generation helpers
+ansible/             Ubuntu WSL2, Docker, K3s, Argo CD, monitoring provisioning
+argocd/              Argo CD Application definitions
+docs/                PRD, task evidence, prompts, design notes, AI usage log
+Dockerfile           Multi-stage non-root application image
+Jenkinsfile          CI/CD pipeline as code
+JenkinsDockerfile    Jenkins image with Python and Docker CLI support
+SETUP.md             Reproducible setup and operations guide
+~~~
+
+## Documentation
+
+- [Setup and operations guide](SETUP.md)
+- [Product requirements](docs/PRD.md)
+- [Course task tracker](docs/TASKS.md)
+- [Agent and contribution rules](AGENTS.md)
+- [Ansible/K3s/GitOps notes](ansible/README.md)
+- [AI usage log](docs/AI-USAGE-LOG.md)
+
+The Helm chart and release values live in the separate [Local Guide Booking GitOps repository](https://github.com/equaan/local-guide-booking-gitops).
+
+## Local-Lab Limits
+
+This repository demonstrates a local single-node WSL2/K3s deployment, not a production high-availability platform. The Kubernetes demonstration uses ephemeral SQLite storage. A production deployment should use PostgreSQL, persistent storage/backups, TLS, ingress, external secret management, alerting, and multiple nodes.
+
+## Student Details
+
+- **Student:** Mohammad Equaan Kacchi
+- **Roll No:** 23102A0073
+- **Course Project:** Selenium Testing for a Local Guide Booking System
+- **Faculty:** Snehal Andhare, Ma'am

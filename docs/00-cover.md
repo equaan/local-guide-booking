@@ -19,7 +19,11 @@ Mohammad Equaan Kacchi
 :::
 
 ::: {custom-style="CoverSmall"}
-Roll No 67 | ID 23102A0073
+Roll No: 23102A0073
+:::
+
+::: {custom-style="CoverSmall"}
+Faculty: Snehal Andhare, Ma'am
 :::
 
 ::: {custom-style="CoverSmall"}

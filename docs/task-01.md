@@ -1,6 +1,8 @@
 # Task 1: Problem Definition and Scope
 
-Student: Mohammad Equaan Kacchi | Roll No: 67 | ID: 23102A0073 | BE-VII Division A
+Student: Mohammad Equaan Kacchi | Roll No: 23102A0073 | BE-VII Division A
+
+Faculty: Snehal Andhare, Ma'am
 
 Project: Local Guide Booking System, DevSecOps CI/CD on Kubernetes
 

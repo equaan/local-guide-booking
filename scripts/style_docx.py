@@ -10,9 +10,13 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
-NAVY = RGBColor(0x1F, 0x38, 0x64)
-GREY = RGBColor(0x55, 0x55, 0x55)
-BODY_FONT = "Calibri"
+NAVY = RGBColor(0x1F, 0x4E, 0x79)
+BLUE = RGBColor(0x2F, 0x75, 0xA1)
+DARK_GREY = RGBColor(0x33, 0x33, 0x33)
+HEADER_BLUE = "1F4E79"
+PALE_BLUE = "D9EAF7"
+EVIDENCE_BLUE = "EAF3F8"
+BODY_FONT = "Aptos"
 CODE_FONT = "Consolas"
 
 
@@ -45,21 +49,21 @@ def style_document(doc):
     for name in ("Normal", "Body Text", "First Paragraph", "Compact", "Block Text"):
         st = get_style(doc, name)
         if st is not None:
-            set_font(st, BODY_FONT, 10.5)
+            set_font(st, BODY_FONT, 11)
             st.paragraph_format.space_after = Pt(6)
-            st.paragraph_format.line_spacing = 1.1
+            st.paragraph_format.line_spacing = 1.15
     compact = get_style(doc, "Compact")
     if compact is not None:
         set_font(compact, BODY_FONT, 9)
         compact.paragraph_format.space_after = Pt(2)
         compact.paragraph_format.space_before = Pt(2)
 
-    sizes = {"Heading 1": 20, "Heading 2": 14, "Heading 3": 12}
+    sizes = {"Heading 1": 17, "Heading 2": 13, "Heading 3": 11}
     for name, size in sizes.items():
         st = get_style(doc, name)
         if st is not None:
             set_font(st, BODY_FONT, size, bold=True, color=NAVY)
-            st.paragraph_format.space_before = Pt(14 if name != "Heading 1" else 0)
+            st.paragraph_format.space_before = Pt(12 if name != "Heading 1" else 0)
             st.paragraph_format.space_after = Pt(6)
             st.paragraph_format.keep_with_next = True
     h1 = get_style(doc, "Heading 1")
@@ -72,10 +76,10 @@ def style_document(doc):
             set_font(st, CODE_FONT, 9)
 
     cover = {
-        "CoverTitle": (30, True, NAVY, 130),
-        "CoverSub": (16, False, GREY, 6),
-        "CoverMeta": (16, True, RGBColor(0x22, 0x22, 0x22), 70),
-        "CoverSmall": (11, False, GREY, 10),
+        "CoverTitle": (26, True, NAVY, 100),
+        "CoverSub": (14, False, BLUE, 8),
+        "CoverMeta": (14, True, NAVY, 52),
+        "CoverSmall": (11, False, DARK_GREY, 8),
     }
     for name, (size, bold, color, before) in cover.items():
         st = get_style(doc, name)
@@ -112,7 +116,7 @@ def style_tables(doc):
             el.set(qn("w:val"), "single")
             el.set(qn("w:sz"), "4")
             el.set(qn("w:space"), "0")
-            el.set(qn("w:color"), "9AA5B1")
+            el.set(qn("w:color"), "808080")
             borders.append(el)
         tbl_pr.append(borders)
 
@@ -131,15 +135,39 @@ def style_tables(doc):
                 tr_pr.append(hdr)
             for cell in row.cells:
                 if r_idx == 0:
-                    shade(cell, "1F3864")
+                    shade(cell, HEADER_BLUE)
                 elif r_idx % 2 == 0:
-                    shade(cell, "F2F5F9")
+                    shade(cell, PALE_BLUE)
                 for p in cell.paragraphs:
                     for run in p.runs:
                         run.font.size = Pt(9)
                         if r_idx == 0:
                             run.font.bold = True
                             run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+
+
+def style_screenshot_placeholders(doc):
+    for paragraph in doc.paragraphs:
+        if paragraph.style.name != "ScreenshotPlaceholder":
+            continue
+        p_pr = paragraph._p.get_or_add_pPr()
+        shading = OxmlElement("w:shd")
+        shading.set(qn("w:val"), "clear")
+        shading.set(qn("w:color"), "auto")
+        shading.set(qn("w:fill"), EVIDENCE_BLUE)
+        p_pr.append(shading)
+        border = OxmlElement("w:pBdr")
+        for edge in ("top", "left", "bottom", "right"):
+            element = OxmlElement(f"w:{edge}")
+            element.set(qn("w:val"), "single")
+            element.set(qn("w:sz"), "6")
+            element.set(qn("w:space"), "6")
+            element.set(qn("w:color"), "2F75A1")
+            border.append(element)
+        p_pr.append(border)
+        paragraph.paragraph_format.space_before = Pt(8)
+        paragraph.paragraph_format.space_after = Pt(8)
+        paragraph.paragraph_format.line_spacing = 1.15
 
 
 def add_page_numbers(doc):
@@ -150,12 +178,12 @@ def add_page_numbers(doc):
         for r in list(p.runs):
             r._r.getparent().remove(r._r)
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        label = p.add_run("Local Guide Booking System | Mohammad Equaan Kacchi | Page ")
+        label = p.add_run("Local Guide Booking System | Page ")
         label.font.size = Pt(8.5)
-        label.font.color.rgb = GREY
+        label.font.color.rgb = DARK_GREY
         run = p.add_run()
         run.font.size = Pt(8.5)
-        run.font.color.rgb = GREY
+        run.font.color.rgb = DARK_GREY
         for kind, text in (("begin", None), (None, "PAGE"), ("end", None)):
             if kind:
                 el = OxmlElement("w:fldChar")
@@ -180,6 +208,7 @@ def main(path):
     doc = Document(path)
     style_document(doc)
     style_tables(doc)
+    style_screenshot_placeholders(doc)
     scale_images(doc)
     add_page_numbers(doc)
     doc.save(path)
